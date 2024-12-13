@@ -1430,6 +1430,7 @@ class OpenStack_1_1_NodeDriver(OpenStackNodeDriver):
         ex_metadata=None,
         ex_files=None,
         networks=None,
+        ex_network_config=None,
         ex_disk_config=None,
         ex_admin_pass=None,
         ex_availability_zone=None,
@@ -1468,6 +1469,10 @@ class OpenStack_1_1_NodeDriver(OpenStackNodeDriver):
 
         :keyword    networks: The server is launched into a set of Networks.
         :type       networks: ``list`` of :class:`OpenStackNetwork`
+
+        :keyword    ex_network_config: The server is launched with a predefined network config. If this option is used, the 
+                                       dict is passed through directly and networks is ignored.
+        :type       ex_network_config: ``dict``
 
         :keyword    ex_disk_config: Name of the disk configuration.
                                     Can be either ``AUTO`` or ``MANUAL``.
@@ -1508,6 +1513,7 @@ class OpenStack_1_1_NodeDriver(OpenStackNodeDriver):
             ex_metadata=ex_metadata,
             ex_files=ex_files,
             networks=networks,
+            ex_network_config=ex_network_config,
             ex_disk_config=ex_disk_config,
             ex_availability_zone=ex_availability_zone,
             ex_blockdevicemappings=ex_blockdevicemappings,
@@ -1635,6 +1641,14 @@ class OpenStack_1_1_NodeDriver(OpenStackNodeDriver):
             networks = kwargs["networks"] or []
             networks = [{"uuid": network.id} for network in networks]
             server_params["networks"] = networks
+
+        if kwargs.get("ex_network_config", None):
+            # Overwrites any networks passed in with a plain network dict as ex_network_config
+            # See https://docs.openstack.org/api-ref/compute/#create-server for possible options
+            # The default implementation assumes networks.uuid, but if you instead want to use
+            # networks.port, networks.fixed_ip or networks.tag you can pass in a plain dict
+            # as ex_network_config instead.
+            server_params["networks"] = kwargs["ex_network_config"]
 
         if kwargs.get("ex_security_groups", None):
             server_params["security_groups"] = []
